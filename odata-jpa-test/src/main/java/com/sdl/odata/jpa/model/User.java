@@ -18,58 +18,52 @@ package com.sdl.odata.jpa.model;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import java.util.List;
 
 /**
  * Users entity.
+ *
  * @author Renze de Vries
  */
 @Entity(name = "USERS")
 public class User {
-    private String userId;
-    private String name;
-    private String email;
+    private int userId;
+    private String lastname;
+    private String firstname;
     private int age;
 
+    private Address address;
     private List<PhotoItem> photos;
-
-    public User(String userId, String name, String email, List<PhotoItem> photos) {
-        this.userId = userId;
-        this.name = name;
-        this.email = email;
-        this.photos = photos;
-    }
-
-    public User() {
-    }
 
     @Id
     @Column
-    public String getUserId() {
+    public int getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(int userId) {
         this.userId = userId;
     }
 
     @Column
-    public String getName() {
-        return name;
+    public String getLastname() {
+        return lastname;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setLastname(String lastname) {
+        this.lastname = lastname;
     }
 
     @Column
-    public String getEmail() {
-        return email;
+    public String getFirstname() {
+        return firstname;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setFirstname(String firstname) {
+        this.firstname = firstname;
     }
 
     @Column
@@ -81,12 +75,22 @@ public class User {
         this.age = age;
     }
 
-    @OneToMany(mappedBy = "owner")
+    @OneToMany(mappedBy = "user")
     public List<PhotoItem> getPhotos() {
         return photos;
     }
 
     public void setPhotos(List<PhotoItem> photos) {
         this.photos = photos;
+    }
+
+    @ManyToOne
+    @JoinColumn(name = "addressId", referencedColumnName = "addressId")
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
     }
 }

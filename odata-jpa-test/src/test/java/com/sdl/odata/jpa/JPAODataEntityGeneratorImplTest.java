@@ -19,6 +19,7 @@ import com.sdl.odata.api.edm.ODataEdmException;
 import com.sdl.odata.api.processor.datasource.ODataDataSourceException;
 import com.sdl.odata.datasource.jpa.JPAODataEntityGeneratorImpl;
 import com.sdl.odata.edm.factory.annotations.AnnotationEntityDataModelFactory;
+import com.sdl.odata.jpa.model.Address;
 import com.sdl.odata.jpa.model.PhotoItem;
 import com.sdl.odata.jpa.model.User;
 import org.junit.Test;
@@ -35,6 +36,7 @@ public class JPAODataEntityGeneratorImplTest {
     private static final Logger LOG = LoggerFactory.getLogger(JPAODataEntityGeneratorImplTest.class);
 
     private static final List<Class<?>> ENTITIES = new ArrayList<Class<?>>() { {
+        add(Address.class);
         add(PhotoItem.class);
         add(User.class);
     } };
