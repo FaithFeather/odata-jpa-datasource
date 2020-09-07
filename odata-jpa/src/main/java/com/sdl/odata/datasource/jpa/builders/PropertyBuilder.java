@@ -35,6 +35,7 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -42,6 +43,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.function.Supplier;
 
@@ -201,6 +203,7 @@ public class PropertyBuilder {
         private boolean column = false;
         private boolean oneToMany = false;
         private boolean manyToOne = false;
+        private boolean oneToOne = false;
         private boolean collection = false;
         private boolean key = false;
 
@@ -211,6 +214,7 @@ public class PropertyBuilder {
                 column = method.getAnnotation(Column.class) != null;
                 oneToMany = method.getAnnotation(OneToMany.class) != null;
                 manyToOne = method.getAnnotation(ManyToOne.class) != null;
+                oneToOne = method.getAnnotation(OneToOne.class) != null;
                 collection = Collection.class.isAssignableFrom(method.getReturnType());
                 key = method.getAnnotation(Id.class) != null;
             }
@@ -218,8 +222,9 @@ public class PropertyBuilder {
 
         public boolean isPrimitiveType() {
             Class<?> returnType = method.getReturnType();
-
-            return returnType.isPrimitive() || returnType.isAssignableFrom(String.class);
+            return returnType.isPrimitive() || returnType.isAssignableFrom(String.class)
+                    || returnType.isAssignableFrom(ZonedDateTime.class) || returnType.isAssignableFrom(Integer.class)
+                    || returnType.isAssignableFrom(Float.class);
         }
 
         public Class<?> getReturnType() {
@@ -227,7 +232,7 @@ public class PropertyBuilder {
         }
 
         public boolean isValid() {
-            return method != null && (column || oneToMany || manyToOne || key);
+            return method != null && (column || oneToMany || manyToOne || oneToOne || key);
         }
 
         public boolean isColumn() {
@@ -241,6 +246,8 @@ public class PropertyBuilder {
         public boolean isManyToOne() {
             return manyToOne;
         }
+
+        public boolean isOneToOne() { return oneToOne; }
 
         public boolean isCollection() {
             return collection;
