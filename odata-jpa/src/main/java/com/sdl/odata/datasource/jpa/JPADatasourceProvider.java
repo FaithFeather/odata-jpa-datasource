@@ -23,6 +23,7 @@ import com.sdl.odata.api.processor.datasource.DataSource;
 import com.sdl.odata.api.processor.datasource.DataSourceProvider;
 import com.sdl.odata.api.processor.datasource.ODataDataSourceException;
 import com.sdl.odata.api.processor.query.QueryOperation;
+import com.sdl.odata.api.processor.query.QueryResult;
 import com.sdl.odata.api.processor.query.strategy.QueryOperationStrategy;
 import com.sdl.odata.api.service.ODataRequestContext;
 import com.sdl.odata.datasource.jpa.query.JPAQuery;
@@ -39,6 +40,8 @@ import javax.persistence.metamodel.EntityType;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.sdl.odata.api.processor.query.QueryResult.from;
@@ -62,6 +65,19 @@ public class JPADatasourceProvider implements DataSourceProvider {
     @Autowired
     private ODataProxyProcessor proxyProcessor;
 
+    @Override
+    public boolean isSuitableFor(ODataRequestContext requestContext, String entityType)
+            throws ODataDataSourceException {
+        Class<?> odataType = requestContext.getEntityDataModel().getType(entityType).getJavaType();
+        ODataJPAEntity jpaAnnotation = odataType.getAnnotation(ODataJPAEntity.class);
+        if (jpaAnnotation != null) {
+            String jpaType = jpaAnnotation.value();
+            return isValidEntityType(jpaType);
+        }
+
+        return false;
+    }
+
     /**
      * Check if the given JPA entity class is a valid entity type.
      *
@@ -77,19 +93,6 @@ public class JPADatasourceProvider implements DataSourceProvider {
                 return true;
             }
         }
-        return false;
-    }
-
-    @Override
-    public boolean isSuitableFor(ODataRequestContext requestContext, String entityType)
-            throws ODataDataSourceException {
-        Class<?> odataType = requestContext.getEntityDataModel().getType(entityType).getJavaType();
-        ODataJPAEntity jpaAnnotation = odataType.getAnnotation(ODataJPAEntity.class);
-        if (jpaAnnotation != null) {
-            String jpaType = jpaAnnotation.value();
-            return isValidEntityType(jpaType);
-        }
-
         return false;
     }
 
@@ -110,7 +113,14 @@ public class JPADatasourceProvider implements DataSourceProvider {
             List<Object> result = executeQueryListResult(query);
             LOG.info("Found: {} items for query: {}", result.size(), query);
 
-            return from(convert(entityDataModel, expectedODataEntityType.typeName(), result));
+            QueryResult strategy = from(convert(entityDataModel, expectedODataEntityType.typeName(), result));
+
+            if (requestContext.getRequest().toString().contains("count=true")) {
+                strategy.addMeta("count", executeCount(query));
+                LOG.info("Max items: {} items for query", strategy.getMeta().get("count"));
+            }
+
+            return strategy;
         };
     }
 
@@ -128,6 +138,50 @@ public class JPADatasourceProvider implements DataSourceProvider {
         }).collect(Collectors.toList());
     }
 
+
+    private Integer executeCount(JPAQuery jpaQuery) {
+        EntityManager em = entityManagerFactory.createEntityManager();
+        StringBuilder queryString = new StringBuilder(jpaQuery.getQueryString());
+
+        Pattern pattern = Pattern.compile("SELECT(\\s).*(\\s)FROM");
+        Matcher matcher = pattern.matcher(queryString);
+
+        String finalQuery = queryString.toString();
+        if (matcher.find()) {
+            // replace select content with a count content
+            finalQuery = matcher.replaceFirst("SELECT COUNT(*) AS TOTAL FROM");
+        }
+
+        // need to remove order by clause
+        pattern = Pattern.compile("ORDER BY(\\s).*");
+        matcher = pattern.matcher(finalQuery);
+        if (matcher.find()) {
+            // replace order by clause
+            finalQuery = matcher.replaceFirst("");
+        }
+
+        // need to fetch additions by clause
+        pattern = Pattern.compile("FETCH");
+        matcher = pattern.matcher(finalQuery);
+        if (matcher.find()) {
+            // fetch is useless (no need for data themselves, but keep join for where clause)
+            finalQuery = matcher.replaceAll("");
+        }
+
+        LOG.info("Count query: {}", finalQuery);
+        Query query = em.createQuery(finalQuery);
+        Map<String, Object> queryParams = jpaQuery.getQueryParams();
+
+        try {
+            for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
+                query.setParameter(entry.getKey(), tryConvert(entry.getValue()));
+            }
+            return query.getSingleResult() != null ? Integer.parseInt(query.getSingleResult().toString()) : 0;
+        } finally {
+            em.close();
+        }
+    }
+
     private <T> List<T> executeQueryListResult(JPAQuery jpaQuery) {
         EntityManager em = entityManagerFactory.createEntityManager();
 
@@ -141,15 +195,12 @@ public class JPADatasourceProvider implements DataSourceProvider {
             if (nrOfResults > 0) {
                 query.setMaxResults(nrOfResults);
             }
-
             if (startPosition > 0) {
                 query.setFirstResult(startPosition);
             }
-
             for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
                 query.setParameter(entry.getKey(), tryConvert(entry.getValue()));
             }
-
             return query.getResultList();
         } finally {
             em.close();
