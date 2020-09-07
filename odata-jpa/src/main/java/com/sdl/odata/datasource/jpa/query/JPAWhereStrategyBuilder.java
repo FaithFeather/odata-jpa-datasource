@@ -81,13 +81,8 @@ public class JPAWhereStrategyBuilder {
         }
     }
 
-    /**
-     * Add contains for filters (work for nested (1 down))
-     * @param criteria
-     * @param builder
-     * @throws ODataException
-     */
-    private void buildFromContainsMethodCriteria(ContainsMethodCriteria criteria, StringBuilder builder) throws ODataException {
+    private void buildFromContainsMethodCriteria(ContainsMethodCriteria criteria, StringBuilder builder)
+            throws ODataException {
         builder.append("(");
         buildFromCriteriaValue(criteria.getProperty(), builder);
 
@@ -103,9 +98,16 @@ public class JPAWhereStrategyBuilder {
         builder.append(")");
     }
 
-    private void buildFromComparisonCriteria(ComparisonCriteria criteria, StringBuilder builder) throws ODataException {
+    private void buildFromComparisonCriteria(ComparisonCriteria criteria, StringBuilder builder)
+            throws ODataException {
         builder.append("(");
         buildFromCriteriaValue(criteria.left(), builder);
+        String[] propertyFields = ((PropertyCriteriaValue) criteria.left()).propertyName().split("\\.");
+        if (propertyFields.length > 1) {
+            for (String propertyField: propertyFields) {
+                builder.append('.').append(propertyField);
+            }
+        }
         builder.append(' ').append(criteria.operator().toString()).append(' ');
         buildFromCriteriaValue(criteria.right(), builder);
         builder.append(")");
