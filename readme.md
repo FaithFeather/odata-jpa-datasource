@@ -42,8 +42,14 @@ You can query the database with a Query like this for example:
 ```
 http://localhost:8080/jpa.svc/Users?$filter=name eq 'Donald'
 ```
+
 ### Deleting data
 To remove the entity you can use the following command:
 ```
 curl -i -X DELETE http://localhost:8080/jpa.svc/Users\(\'Donald\'\) --header "Content-Type:application/json"
 ```
+
+### Added operations
+##### Count Operation
+```http://localhost:8080/jpa.svc/Users?$count=true```
+
