@@ -52,4 +52,9 @@ curl -i -X DELETE http://localhost:8080/jpa.svc/Users\(\'Donald\'\) --header "Co
 ### Added operations
 ##### Count Operation
 ```http://localhost:8080/jpa.svc/Users?$count=true```
+#### Contain Operation (with depth)
+```http://localhost:8080/jpa.svc/Users?$filter=contains(lastname, 'Du')```
+```http://localhost:8080/jpa.svc/Users?$filter=contains(address/city, 'Duck')```
+#### Filter (with depth)
+```http://localhost:8080/jpa.svc/Users?$filter=(address/city eq 'Duckburg')```
 

@@ -18,57 +18,48 @@ package com.sdl.odata.jpa.model;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 
-/**
- * PhotoItem entity.
- *
- * @author Renze de Vries
- */
-@Entity(name = "PHOTOS")
-public class PhotoItem {
-    private int id;
-    private String name;
-    private String url;
-
-    private User user;
+@Entity(name = "ADDRESSES")
+public class Address {
+    private int addressId;
+    private String address;
+    private String city;
+    private String country;
 
     @Id
     @Column
-    public int getId() {
-        return id;
+    public int getAddressId() {
+        return addressId;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    @Column
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public void setAddressId(int addressId) {
+        this.addressId = addressId;
     }
 
     @Column
-    public String getUrl() {
-        return url;
+    public String getAddress() {
+        return address;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public void setAddress(String address) {
+        this.address = address;
     }
 
-    @ManyToOne
-    @JoinColumn(name = "userId", referencedColumnName = "userId")
-    public User getUser() {
-        return user;
+    @Column
+    public String getCity() {
+        return city;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    @Column
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
     }
 }

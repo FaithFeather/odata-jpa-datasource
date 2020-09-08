@@ -42,6 +42,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.function.Supplier;
 
@@ -107,9 +108,9 @@ public class PropertyBuilder {
                 CtField field = generateField(fieldType, propertyName,
                         () -> generateNavigationAnnotation(propertyName));
                 String listSig = new SignatureAttribute.ClassType(propertyType.getName(),
-                        new SignatureAttribute.TypeArgument[] {
-                        new SignatureAttribute.TypeArgument(new SignatureAttribute.ClassType(odataTypeName))
-                }).encode();
+                        new SignatureAttribute.TypeArgument[]{
+                                new SignatureAttribute.TypeArgument(new SignatureAttribute.ClassType(odataTypeName))
+                        }).encode();
                 field.setGenericSignature(listSig);
             } else if (context.containsJpaType(propertyType)) {
                 String odataTypeName = GeneratorUtil.getODataTypeName(propertyType.getPackage().getName(),
@@ -201,6 +202,7 @@ public class PropertyBuilder {
         private boolean column = false;
         private boolean oneToMany = false;
         private boolean manyToOne = false;
+        private boolean oneToOne = false;
         private boolean collection = false;
         private boolean key = false;
 
@@ -218,8 +220,9 @@ public class PropertyBuilder {
 
         public boolean isPrimitiveType() {
             Class<?> returnType = method.getReturnType();
-
-            return returnType.isPrimitive() || returnType.isAssignableFrom(String.class);
+            return returnType.isPrimitive() || returnType.isAssignableFrom(String.class)
+                    || returnType.isAssignableFrom(ZonedDateTime.class) || returnType.isAssignableFrom(Integer.class)
+                    || returnType.isAssignableFrom(Float.class);
         }
 
         public Class<?> getReturnType() {

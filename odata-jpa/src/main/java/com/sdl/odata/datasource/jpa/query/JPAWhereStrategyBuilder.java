@@ -21,6 +21,7 @@ import com.sdl.odata.api.edm.model.EntityType;
 import com.sdl.odata.api.processor.query.ArithmeticCriteriaValue;
 import com.sdl.odata.api.processor.query.ComparisonCriteria;
 import com.sdl.odata.api.processor.query.CompositeCriteria;
+import com.sdl.odata.api.processor.query.ContainsMethodCriteria;
 import com.sdl.odata.api.processor.query.Criteria;
 import com.sdl.odata.api.processor.query.CriteriaValue;
 import com.sdl.odata.api.processor.query.LiteralCriteriaValue;
@@ -73,14 +74,40 @@ public class JPAWhereStrategyBuilder {
             buildFromCompositeCriteria((CompositeCriteria) criteria, builder);
         } else if (criteria instanceof ComparisonCriteria) {
             buildFromComparisonCriteria((ComparisonCriteria) criteria, builder);
+        } else if (criteria instanceof ContainsMethodCriteria) {
+            buildFromContainsMethodCriteria((ContainsMethodCriteria) criteria, builder);
         } else {
             throw new ODataNotImplementedException("Unsupported criteria type: " + criteria);
         }
     }
 
-    private void buildFromComparisonCriteria(ComparisonCriteria criteria, StringBuilder builder) throws ODataException {
+    private void buildFromContainsMethodCriteria(ContainsMethodCriteria criteria, StringBuilder builder)
+            throws ODataException {
+        builder.append("(");
+        buildFromCriteriaValue(criteria.getProperty(), builder);
+
+        String[] propertyFields = ((PropertyCriteriaValue) criteria.getProperty()).propertyName().split("\\.");
+        if (propertyFields.length > 1) {
+            for (String propertyField: propertyFields) {
+                builder.append('.').append(propertyField);
+            }
+        }
+
+        builder.append(' ').append("LIKE").append(' ');
+        buildFromCriteriaValue(criteria.getStringLiteral(), builder);
+        builder.append(")");
+    }
+
+    private void buildFromComparisonCriteria(ComparisonCriteria criteria, StringBuilder builder)
+            throws ODataException {
         builder.append("(");
         buildFromCriteriaValue(criteria.left(), builder);
+        String[] propertyFields = ((PropertyCriteriaValue) criteria.left()).propertyName().split("\\.");
+        if (propertyFields.length > 1) {
+            for (String propertyField: propertyFields) {
+                builder.append('.').append(propertyField);
+            }
+        }
         builder.append(' ').append(criteria.operator().toString()).append(' ');
         buildFromCriteriaValue(criteria.right(), builder);
         builder.append(")");

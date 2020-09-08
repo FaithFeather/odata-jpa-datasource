@@ -103,6 +103,16 @@ public final class JPAMetadataUtil {
      */
     public static String getJPAPropertyName(EntityType entityType, String propertyName) {
         StructuralProperty property = entityType.getStructuralProperty(propertyName);
+
+        if (propertyName.contains(".")) {
+            String[] splitProperty = propertyName.split("\\.");
+            for (StructuralProperty structuralProperty : entityType.getStructuralProperties()) {
+                if (splitProperty[0].equals(structuralProperty.getName())) {
+                    property = structuralProperty;
+                }
+            }
+        }
+
         if (property == null) {
             throw new ODataSystemException("Property '" + propertyName + "' does not exist in entity type: " +
                     entityType.getFullyQualifiedName());
