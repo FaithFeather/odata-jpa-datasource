@@ -174,9 +174,7 @@ public class JPADatasourceProvider implements DataSourceProvider {
         Map<String, Object> queryParams = jpaQuery.getQueryParams();
 
         try {
-            for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
-                query.setParameter(entry.getKey(), tryConvert(entry.getValue()));
-            }
+            setParameters(query, queryParams, jpaQuery.getQueryString());
             return query.getSingleResult() != null ? Integer.parseInt(query.getSingleResult().toString()) : 0;
         } finally {
             em.close();
