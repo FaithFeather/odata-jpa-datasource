@@ -22,6 +22,7 @@ import com.sdl.odata.api.ODataSystemException;
 import com.sdl.odata.api.edm.model.EntityDataModel;
 import com.sdl.odata.api.edm.model.EntitySet;
 import com.sdl.odata.api.edm.model.EntityType;
+import com.sdl.odata.api.processor.query.CountOperation;
 import com.sdl.odata.api.processor.query.CriteriaFilterOperation;
 import com.sdl.odata.api.processor.query.ExpandOperation;
 import com.sdl.odata.api.processor.query.JoinOperation;
@@ -84,6 +85,8 @@ public final class JPAQueryStrategyBuilder {
             return buildFromOrderBy((OrderByOperation) operation);
         } else if (operation instanceof SelectPropertiesOperation) {
             return buildFromSelectProperties((SelectPropertiesOperation) operation);
+        } else if (operation instanceof CountOperation) {
+            return buildFromOperation(((CountOperation) operation).getSource());
         }
 
         throw new ODataSystemException("Unsupported query operation: " + operation);
