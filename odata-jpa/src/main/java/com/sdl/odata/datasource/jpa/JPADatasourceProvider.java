@@ -36,9 +36,12 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
 import javax.persistence.metamodel.EntityType;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.sdl.odata.api.processor.query.QueryResult.from;
@@ -146,13 +149,29 @@ public class JPADatasourceProvider implements DataSourceProvider {
                 query.setFirstResult(startPosition);
             }
 
-            for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
-                query.setParameter(entry.getKey(), tryConvert(entry.getValue()));
-            }
+            setParameters(query, queryParams, jpaQuery.getQueryString());
 
             return query.getResultList();
         } finally {
             em.close();
+        }
+    }
+
+    private void setParameters(Query query, Map<String, Object> queryParams, String jpaQuery) {
+        Pattern pattern = Pattern.compile("LIKE(\\s):(\\w*)");
+        Matcher matcher = pattern.matcher(jpaQuery);
+        List<String> likeCriteria = new ArrayList<>();
+        while (matcher.find()) {
+            String[] distinct = matcher.group(0).split(" ");
+            likeCriteria.add(distinct[1].substring(1));
+        }
+
+        for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
+            if (likeCriteria.contains(entry.getKey())) {
+                query.setParameter(entry.getKey(), tryConvert("%" + entry.getValue() + "%"));
+            } else {
+                query.setParameter(entry.getKey(), tryConvert(entry.getValue()));
+            }
         }
     }
 
